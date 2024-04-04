@@ -6,12 +6,11 @@ public class Timezone {
 
     public static String getTimezone(HttpServletRequest req) {
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss ");
         if (req.getParameter("timezone") == null) {
-            return ZonedDateTime.now().format(formatter) + "UTC";
+            return "UTC";
+        } else {
+            return req.getParameter("timezone");
         }
-
-        return req.getParameter("timezone");
 
     }
 

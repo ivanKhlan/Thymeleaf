@@ -11,16 +11,16 @@ import java.util.Arrays;
 public class TimeServlet extends HttpServlet {
 
     public static String sign = null;
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+
+    public static String getTime(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 
         String time = Timezone.getTimezone(req);
-        System.out.println(time);
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss ");
         resp.setContentType("text/html; charset=utf-8");
         if (time == null) {
-            resp.getWriter().write(ZonedDateTime.now().format(formatter) + "UTC");
+            return ZonedDateTime.now().format(formatter) + "UTC";
+
         } else {
             String[] argument = Timezone.parsing(time);
 
@@ -31,18 +31,16 @@ public class TimeServlet extends HttpServlet {
                 belt = argument[0];
                 hours = argument[1];
             } else {
-                resp.getWriter().write(TimezoneValidateFilter.zone);
+                return TimezoneValidateFilter.zone;
             }
 
             String formattedDate = setTimeZone(hours, formatter);
 
-            resp.getWriter().write(formattedDate + belt + sign + hours);
+            return formattedDate + belt + sign + hours;
         }
-
-        resp.getWriter().close();
     }
 
-    public String setTimeZone(String hours, DateTimeFormatter formatter) {
+    public static String setTimeZone(String hours, DateTimeFormatter formatter) {
         if (sign.equals("+")) {
             return ZonedDateTime.now()
                     .plusHours(Long.parseLong(hours))
