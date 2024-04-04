@@ -38,8 +38,7 @@ public class ThymeleafTestController extends HttpServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         resp.setContentType("text/html");
 
-        String time = Timezone.getTimezone(req);
-        System.out.println(time);
+        String time = TimeServlet.getTime(req, resp);
 
         Context simpleContext = new Context(req.getLocale(),
                 Map.of("name", time)
