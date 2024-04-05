@@ -1,68 +1,63 @@
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.annotation.WebFilter;
-import javax.servlet.http.HttpFilter;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.*;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.TimeZone;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 @WebFilter(value = "/time/*")
 public class TimezoneValidateFilter extends HttpFilter {
-
-
-    public static String zone;
     @Override
-    protected void doFilter(HttpServletRequest req,
-                            HttpServletResponse res,
-                            FilterChain chain) throws IOException, ServletException {
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        String time = Timezone.getTimezone(req);
+        String timezone = httpRequest.getParameter("timezone");
 
-        if (isValidTimezone(time)) {
+        if (timezone == null || timezone.isEmpty()) {
 
-            zone = displayTimeInTimezone(time);
-
-            res.setContentType(zone);
-            chain.doFilter(req,res);
-        } else {
-            if (time != null && !time.contains("UTC")) {
-
-                res.setContentType("text/html; charset=utf-8");
-                res.getWriter().write("Invalid timezone");
-                res.setStatus(400);
-
-            } else {
-                chain.doFilter(req,res);
+            Cookie[] cookies = httpRequest.getCookies();
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if (cookie.getName().equals("lastTimezone")) {
+                        timezone = cookie.getValue();
+                        break;
+                    }
+                }
             }
 
-        }
-
-    }
-
-    public static boolean isValidTimezone(String timezone) {
-        String[] availableTimezones = TimeZone.getAvailableIDs();
-
-        for (String availableTimezone : availableTimezones) {
-            if (availableTimezone.equals(timezone)) {
-                return true;
+            if (timezone == null || timezone.isEmpty()) {
+                timezone = "UTC";
             }
         }
 
-        return false;
+        timezone = URLDecoder.decode(timezone, StandardCharsets.UTF_8);
+
+        if (!isValidTimezone(timezone)) {
+            httpResponse.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            httpResponse.getWriter().write("Invalid timezone");
+            return;
+        }
+
+        if (timezone != null && !timezone.isEmpty()) {
+            String encodedTimezone = URLEncoder.encode(timezone, StandardCharsets.UTF_8);
+            Cookie cookie = new Cookie("lastTimezone", encodedTimezone);
+            httpResponse.addCookie(cookie);
+        }
+        chain.doFilter(request, response);
     }
 
-    public static String displayTimeInTimezone(String timezone) {
-        TimeZone timeZone = TimeZone.getTimeZone(timezone);
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        dateFormat.setTimeZone(timeZone);
-        return dateFormat.format(new Date());
-
-
+    private boolean isValidTimezone(String timezone) {
+        try {
+            TimeZone.getTimeZone(timezone);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

@@ -1,18 +1,12 @@
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
-import org.thymeleaf.context.WebContext;
 import org.thymeleaf.templateresolver.FileTemplateResolver;
-
-import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Map;
-import java.util.TimeZone;
 
 @WebServlet(value = "/time/*")
 public class ThymeleafTestController extends HttpServlet {
@@ -20,7 +14,7 @@ public class ThymeleafTestController extends HttpServlet {
     private TemplateEngine engine;
 
     @Override
-    public void init() throws ServletException {
+    public void init() {
 
         engine = new TemplateEngine();
 
@@ -35,10 +29,10 @@ public class ThymeleafTestController extends HttpServlet {
     }
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         resp.setContentType("text/html");
 
-        String time = TimeServlet.getTime(req, resp);
+        String time = TimezoneFormatter.getTime(req, resp);
 
         Context simpleContext = new Context(req.getLocale(),
                 Map.of("name", time)
